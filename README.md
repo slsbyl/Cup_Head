@@ -1,203 +1,387 @@
 # Software Requirements Specification (SRS) - Fluffy Project
 **Based on "Software Requirement Patterns" by Stephen Withall**
 
-هذا الملف يحتوي على متطلبات النظام (Requirements) لمشروع Fluffy مصاغة باستخدام "أنماط المتطلبات" (Requirement Patterns) كمرجع أساسي.
+هذا الملف يحتوي على متطلبات النظام (Requirements) لمشروع Fluffy، معتمدة على التشريح الكامل للأنماط (Full Anatomy of Requirement Patterns) كما نص عليها الكتاب (فصول 5 إلى 12).
 
-## 1. Fundamental Requirements (المتطلبات الأساسية)
+---
 
-### 1.1 Inter-System Interface Pattern
-| Summary | Definition |
+## 1. User Registration Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| n8n Webhook Interface (i1) | There shall be a clearly defined interface (called i1) between the system and the n8n automation platform. It is invoked by the system only. Its purpose is to synchronize order details (retail and returned orders) to n8n for further processing. Ownership of this interface is within the scope of the system. |
-| Hugging Face VTO Interface (i2) | There shall be a clearly defined interface (called i2) between the system and the Hugging Face API (specifically the `fashn-ai/fashn-vton-1.5` model). It is invoked by the system only. Its purpose is to process images for the Virtual Try-On (VTO) feature. |
-| Email Service Interface (i3) | There shall be a clearly defined interface (called i3) between the system and the Email Service Provider (Gmail via Nodemailer). It is invoked by the system only. Its purpose is to send order confirmation emails and password reset links to customers. |
+| **Pattern Name** | User Registration |
+| **Domain** | Access Control Domain |
+| **Group** | Access Control Infrastructure Group |
+| **Anticipated Frequency** | يتكرر عند إنشاء أي حساب جديد في النظام (Client, Worker, Admin). |
+| **Classifications** | Functional, Database-related |
 
-### 1.2 Technology Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** يُستخدم لتسجيل حساب جديد لـ (عميل B2C، أو عامل إنتاج، أو مدير الأتيليه) لإنشاء سجل هوية رقمي وصلاحيات فريدة.
+* **When NOT to use:** لا يُستخدم لتسجيل الكيانات والمصانع الشريكة B2B (لأنهم يتبعون نمط Factory Client Management).
+
+### [3] Discussion
+يعالج هذا النمط جمع البيانات الأساسية للتفريق بين الأدوار المختلفة في السيستم. الكود الفعلي في موديل `User.js` يعتمد على حقل الـ `role` لتحديد مسار المستخدم لاحقاً.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **name** | إلزامي (Mandatory) | الاسم الكامل للمستخدم، نوع البيانات نصي String. |
+| **email** | إلزامي (Mandatory) | البريد الإلكتروني الفريد (المعرف الأساسي)، ويتم تحويله لـ lowercase برمجياً. |
+| **password** | إلزامي (Mandatory) | كلمة المرور، ويشترط الكود ألا تقل عن 6 أحرف قبل الحفظ. |
+| **role** | إلزامي (Mandatory) | نوع الحساب ويأخذ حصراً: client أو worker أو admin. |
+
+### [5] Templates
+"يجب على نظام [Fluffy] إتاحة واجهة لتسجيل حساب جديد لـ [نوع المستخدم] عن طريق تقديم [الاسم، البريد الإلكتروني، وكلمة المرور]، وحفظ البيانات في جدول [User] بعد التحقق من عدم تكرار [البريد الإلكتروني]."
+
+### [6] Examples
+* **مثال 1:** يقوم العميل بالتسجيل عبر صفحة `SignUp.tsx` بإدخال البريد الإلكتروني وكلمة المرور ليكون دوره `client`.
+* **مثال 2:** يقوم الأدمن بتسجيل عامل جديد عبر لوحة التحكم وتعيين دور `worker` له.
+
+### [7] Development & Testing Considerations
+* **للمطور:** يجب استخدام `bcryptjs` لتشفير كلمة المرور داخل الميدل وير `UserSchema.pre('save')` قبل التخزين.
+* **المختبر:** اختبار إرسال طلب تسجيل بإيميل مسجل مسبقاً، والتحقق من استقبال الرد 400 Bad Request مع رسالة "User already exists".
+
+### [8] Extra Requirements
+* **متطلب تابع (Follow-on):** بمجرد نجاح تسجيل الحساب، يتم إرسال بريد إلكتروني ترحيبي آلياً باستخدام واجهة Nodemailer (i3).
+
+---
+
+## 2. User Authentication Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Web Interface Technology | The user interface shall be Web-based and all functions shall operate fully with common Web browsers. React and Tailwind CSS shall be used for user interface development. |
-| Server-Side Technology | The primary programming language for the server-side software shall be Node.js using the Express.js framework. |
-| Database Technology | The system shall store its data in a widely used, well-respected NoSQL database product (MongoDB), utilizing Mongoose for object data modeling. |
+| **Pattern Name** | User Authentication |
+| **Domain** | Access Control Domain |
+| **Group** | Access Control Infrastructure Group |
+| **Anticipated Frequency** | يُستدعى عند كل محاولة تسجيل دخول للمنصة. |
+| **Classifications** | Functional, Security-critical |
 
-## 2. Information Requirements (متطلبات المعلومات)
+### [2] Applicability
+* **When to use:** عندما يحاول العميل أو العامل تسجيل الدخول عبر واجهة الـ `Login.tsx` للوصول إلى بياناته المحمية.
+* **When NOT to use:** لا يُستخدم لفحص أدوار وصلاحيات المستخدم بعد الدخول (تلك وظيفة نمط الـ Authorization).
 
-### 2.1 Data Type Pattern
-| Summary | Definition |
+### [3] Discussion
+يعتمد نظام الدخول في ملف `authController.js` على مطابقة البريد الإلكتروني، وفحص كلمة المرور المفتوحة مع الـ Hash المشفر، وفي حال النجاح يتم توليد رمز توثيق رقمي مُوقع برمجياً JWT Token يحتوي على الـ `id` والـ `role` لضمان أمان الجلسة.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **email** | إلزامي (Mandatory) | البريد الإلكتروني المدخل للبحث عن سجل المستخدم. |
+| **password** | إلزامي (Mandatory) | كلمة المرور المدخلة لمطابقتها مع قاعدة البيانات. |
+| **token** | إلزامي (Mandatory) | رمز الـ JWT المتولد لإدراجه في الـ Headers للطلبات القادمة. |
+
+### [5] Templates
+"يجب على النظام عند استقبال طلب تسجيل الدخول، التحقق من صحة [البريد الإلكتروني] ومطابقة [كلمة المرور]، وتوليد [JWT Token] صالح وصادر من السيرفر."
+
+### [6] Examples
+* **مثال 1:** يقوم العميل بإدخال إيميله وباسورده في صفحة الدخول، فيقوم السيستم بإرجاع التوكين وحفظه في الـ AuthContext.
+
+### [7] Development & Testing Considerations
+* **للمطور:** يجب تخزين مفتاح التوقيع الرقمي للتوكين داخل متغير بيئي محمي ومخفي `process.env.JWT_SECRET` لضمان عدم تزويره.
+* **المختبر:** التحقق من أن محاولة الدخول ببيانات مغلوطة تعيد الرد 400 ومصحوبة برسالة خطأ صلبة "Invalid credentials" لحماية أمان السيستم.
+
+---
+
+## 3. Specific Authorization Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Email Address Data Type | Email addresses, which are used for user identification and communication, shall be of the form of a standard email address string. It shall be converted to lowercase and trimmed of leading/trailing spaces before storage. |
-| Color Code Data Type | Color codes shall be represented either as standard Arabic color names (e.g., "أحمر") or Hexadecimal color codes (e.g., "#ff0000"). |
+| **Pattern Name** | Specific Authorization |
+| **Domain** | Access Control Domain |
+| **Group** | Access Control Infrastructure Group |
+| **Anticipated Frequency** | يُطبق كـ Middleware على جميع الـ API routes الحساسة لحماية البيانات. |
+| **Classifications** | Non-functional, Security-critical, Pervasive |
 
-### 2.2 Data Structure Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** يُستخدم لحظر لوحات التحكم الإدارية والـ Endpoints الحساسة عن المستخدمين العاديين (مثل منع العميل من الدخول لبيانات مصنع أو التلاعب بالمنتجات).
+* **When NOT to use:** لا يُستخدم للتأكد من هوية المستخدم الحالية، بل يعمل بعد الـ Authentication للتأكد من الـ Role فقط.
+
+### [3] Discussion
+في كود مشروع Fluffy، يتم استخدام الميدل وير لفحص دور المستخدم برمجياً قبل تمرير الطلب. على سبيل المثال، المسارات البرمجية المخصصة لتعديل المنتجات أو الاطلاع على الرواتب محمية بفحص صارم لدور الـ `admin` أو `owner` لحماية السيستم.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **userRole** | إلزامي (Mandatory) | الدور الفعلي المستخرج برمجياً من الـ JWT الممرر للتحقق منه. |
+| **requiredRole** | إلزامي (Mandatory) | الدور المطلوب والمصرح له بعبور المسار (مثل: admin). |
+| **failureAction** | إلزامي (Mandatory) | الإجراء البرمجي عند الفشل (إرجاع كود الحظر الحاسم 403 Forbidden). |
+
+### [5] Templates
+"يجب على النظام منع الوصول إلى [المسار / لوحة التحكم] وحجب البيانات تماماً إلا إذا كان حساب المستخدم يحمل دوراً يطابق [الدور المصرح له]."
+
+### [6] Examples
+* **مثال 1:** مسار الـ API لإضافة منتج جديد `/api/products` محمي برمجياً ومتاح فقط لمن يملك دور الـ `admin`.
+* **مثال 2:** في الـ Frontend، شاشة الـ `OwnerDashboard.tsx` محمية بمكون الـ `AdminRoute.tsx` الذي يحول العميل تلقائياً لصفحة الدخول إذا حاول اختراق الرابط يدوياً.
+
+### [7] Development & Testing Considerations
+* **للمطور:** كتابة Middleware مخصص يقوم بقراءة الـ JWT وفحص الأدوار قبل الـ `next()`.
+* **المختبر:** محاولة الدخول لحساب الأدمن باستخدام توكين مسجل كـ client والتحقق من استقبال رد المنع والحظر التام.
+
+---
+
+## 4. Product Inventory Maintenance Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Order Item Details | An Order Item shall comprise the following items of information: <br> - Product ID <br> - Product Name <br> - Selected Color <br> - Selected Size <br> - Quantity (minimum 1) <br> - Unit Price |
-| Shipping Address Details | A Shipping Address shall comprise the following items of information: <br> - Customer Name <br> - Phone Number <br> - Detailed Address <br> - Governorate |
+| **Pattern Name** | Product Inventory Maintenance |
+| **Domain** | User Function Domain |
+| **Group** | Data Maintenance Group |
+| **Anticipated Frequency** | متكرر جداً (يُستدعى عند إضافة أو تعديل بضائع الأتيليه والخامات كالجلود). |
+| **Classifications** | Functional, Database-related |
 
-### 2.3 ID Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** عندما يقوم الأدمن بإدارة منتجات المتجر الإلكتروني (إضافة فستان سواريه، تعديل خامة جلدية، تحديث الأسعار أو كمية الاستوك).
+* **When NOT to use:** لا يُسخدم لتصفح المنتجات من قبل الزوار، حيث ينحصر فقط في العمليات التعديلية والإدارية (CRUD).
+
+### [3] Discussion
+يمتلك المنتج خصائص فنية دقيقة في قاعدة البيانات تم وصفها بموديل `Product.js`. النمط يضمن صرامة مدخلات المخازن والأسعار لمنع الأخطاء الحسابية أو تصفير الكميات بالخطأ.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **name** | إلزامي (Mandatory) | الاسم التجاري الفريد للقطعة، نوع البيانات String نصي. |
+| **price** | إلزامي (Mandatory) | سعر القطعة المالي، ويشترط الكود رقماً موجباً أكبر من الصفر. |
+| **stock** | إلزامي (Mandatory) | عدد القطع المتاحة في الورشة والمخزن (نوع رقمي Number). |
+| **category** | إلزامي (Mandatory) | تصنيف المنتج في المتجر (مثل: Tops, Bottoms, Leather). |
+| **images** | اختياري (Optional) | مصفوفة روابط صور المنتج المرفوعة لعرضها في الموقع والـ VTO. |
+
+### [5] Templates
+"يجب على النظام تمكين المسؤول من إجراء [إضافة / تعديل / حذف] على سجلات جدول [Product] بشرط أن تكون قيم حقول [price] وحقول [stock] موجبة تماماً."
+
+### [6] Examples
+* **مثال 1:** يقوم الأدمن بفتح مودال `AddProductModal.tsx` وإضافة منتج باسم "جاكيت جلد أسود" بسعر 2500 جنيه ومخزون 10 قطع.
+
+### [7] Development & Testing Considerations
+* **للمطور:** كتابة Mongoose Validation داخل موديل الـ Product يمنع حفظ أي قيمة سالبة في الأسعار برمجياً تلقائياً.
+* **المختبر:** محاولة إرسال طلب تحديث منتج بـ سعر سالب (مثل price: -50) والتحقق من رفض السيستم للعملية وإرجاع رسالة خطأ.
+
+---
+
+## 5. Factory Worker Profile Maintenance Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Order ID | Each order shall be uniquely identified by an Order ID that is automatically generated by the database (MongoDB ObjectId). For user display, the last 6 characters of this ID shall be shown in uppercase. |
-| User ID | Each User shall be uniquely identified by their Email Address. |
+| **Pattern Name** | Factory Worker Profile Maintenance |
+| **Domain** | User Function Domain |
+| **Group** | Data Maintenance Group |
+| **Anticipated Frequency** | يُستدعى عند تسجيل عامل جديد بالورشة أو تحديث مهاراته ورواتبه الحسابية. |
+| **Classifications** | Functional, Database-related |
 
-### 2.4 Calculation Formula Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** عندما تقوم الإدارة بتهيئة ملفات العمال لتحديد تخصصاتهم الفنية ورواتبهم الأساسية لتوزيع المهام بكفاءة داخل خط إنتاج الأتيليه.
+* **When NOT to use:** لا يُستخدم لرصد حضور وغياب العمال اليومي، بل ينحصر في إدارة الحسابات المالية والملفات الأساسية.
+
+### [3] Discussion
+يعتمد توزيع الأوردرات اللوجستية في الورشة على مهارة العامل. يسجل جدول `Worker.js` معرّف العامل بربطه بحسابه الأصلي في الـ User ويحفظ حقول مصفوفة المهارات `skills` ومعدل الراتب الأساسي والخصومات لإجراء عمليات كشف الرواتب بدقة.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **user** | إلزامي (Mandatory) | رابط مرجعي يربط العامل بجدول الـ User العام (ObjectId). |
+| **skills** | إلزامي (Mandatory) | مصفوفة تحتوي على المهارات (مثل: Sewing, Cutting, Embroidering). |
+| **salary** | إلزامي (Mandatory) | الراتب الشهري المتفق عليه، وهو رقم موجب يُستخدم في حسابات الرواتب صافية. |
+| **deductions** | إلزامي (Mandatory) | الخصومات والجزاءات المالية المطبقة على العامل للشهر الحالي. |
+
+### [5] Templates
+"يجب على النظام السماح للمسؤول بإدارة وتعديل ملفات العمال بربطها بـ [معرّف المستخدم]، وتدوين مصفوفة [المهارات]، وحفظ الأجر الأساسي في حقل [salary]."
+
+### [6] Examples
+* **مثال 1:** تقوم الإدارة بفتح مودال `AddWorkerModal.tsx` لتسجيل عامل جديد وتحديد راتبه بـ 6000 جنيه شهرياً وإضافة مهارة "خياطة الجلود".
+
+### [7] Development & Testing Considerations
+* **للمطور:** يجب استخدام خاصية الـ `populate('user')` عند جلب بيانات العمال لعرض أسمائهم وبياناتهم الأساسية بشكل مترابط في الـ Frontend.
+* **المختبر:** التحقق من أن خوارزمية حساب صافي المرتب تعطي ناتجاً صحيحاً يطابق معادلة الكود: `NetSalary = Salary - Deductions`.
+
+---
+
+## 6. Factory Client Management Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Order Total Amount Calculation | The total amount of a customer order shall be calculated as follows:<br> `TotalAmount = ItemsTotal + ShippingFee`<br> where:<br> `ItemsTotal` is the sum of (`Quantity` * `Price`) for each item in the order.<br> `ShippingFee` is the shipping cost determined by the selected Governorate. |
-| Worker Net Salary Calculation | The net salary of a worker shall be determined as follows:<br> `NetSalary = BaseSalary - Deductions`<br> where:<br> `BaseSalary` is the worker's agreed monthly salary.<br> `Deductions` is the total amount of financial penalties or withdrawals for that month. |
+| **Pattern Name** | Factory Client Management |
+| **Domain** | User Function Domain |
+| **Group** | Data Maintenance Group |
+| **Anticipated Frequency** | يُستدعى مرة واحدة عند تسجيل مصنع أو أتيليه شريك جديد في تعاقدات الجملة B2B. |
+| **Classifications** | Functional, Database-related |
 
-## 3. Data Entity Requirements (متطلبات كيانات البيانات)
+### [2] Applicability
+* **When to use:** عندما ترغب إدارة الأتيليه في تسجيل بيانات الكيانات والمصانع الخارجية الشريكة لمتابعة طلبيات الجملة والديون والمدفوعات.
+* **When NOT to use:** لا يُستخدم لتسجيل حسابات العملاء الأفراد B2C الذين يشترون قطعاً فردية من الماركت الإلكتروني.
 
-### 3.1 Living Entity Pattern
-| Summary | Definition |
+### [3] Discussion
+يتعامل السيستم مع الكيانات التجارية بشكل منفصل عن الأفراد. موديل `FactoryClient.js` مصمم خصيصاً لحفظ اسم الشركة، المسؤول، رقم التليفون، والـ `totalDebt` (إجمالي الديون) والـ `paidAmount` لتنظيم المعاملات المالية الكبرى وحسابات التعاقد.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **companyName** | إلزامي (Mandatory) | الاسم التجاري الرسمي للمصنع أو الأتيليه الشريك (String). |
+| **ownerName** | إلزامي (Mandatory) | اسم المالك أو الشخص المسؤول عن التوقيع وإدارة التعاقد والطلب. |
+| **username** | إلزامي (Mandatory) | اسم مستخدم فريد لتمكين المصنع الشريك من الدخول لبوابته الرقمية. |
+| **totalDebt** | إلزامي (Mandatory) | القيمة المالية الكلية المستحقة على المصنع وتزيد ديناميكياً مع كل أوردر. |
+
+### [5] Templates
+"يجب على النظام السماح للأدمن بتهيئة وإدارة حسابات الكيانات الشريكة عن طريق تسجيل [اسم الشركة]، وتعيين [اسم المالك للمصنع] وحفظ الديون في حقل [totalDebt]."
+
+### [6] Examples
+* **مثال 1:** تسجل الإدارة عبر واجهة `AddClientModal.tsx` حساباً لـ "مصنع سادا للملابس" برصيد ديون يبدأ من صفر.
+* **مثال 2:** يقوم العميل التجاري بالدخول لـ `FactoryClientPortal.tsx` لمراجعة فواتير الديون والطلبيات الخاصة به.
+
+### [7] Development & Testing Considerations
+* **للمطور:** كتابة دالة في الـ Backend بملف `clientController.js` تقوم بزيادة حقل الـ `paidAmount` وإنقاص الدين آلياً عند تسجيل عملية دفع كاش.
+* **المختبر:** التحقق من أن النظام يمنع تكرار تسجيل اسم مستخدم `username` مسجل مسبقاً لمنع تداخل حسابات الكيانات التجارية.
+
+---
+
+## 7. Production Task Scheduling Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Product Entity | The system shall store the following information about a Product:<br> - Name, Price, Description, Images (Array of URLs), Category, Available Sizes, Available Colors, Stock Quantity, Best Seller Flag, New Arrival Flag, Rating, and Sold Count.<br> Each Product is uniquely identified by its internal Database ID. |
-| Worker Entity | The system shall store the following information about a Worker:<br> - Name, Role, Salary, Start Date, Deductions, Present Days, Absent Days, and Notes.<br> Each Worker is uniquely identified by its internal Database ID. |
-| Factory Client Entity | The system shall store the following information about a Factory Client:<br> - Company Name, Owner Name, Phone, Username, Password, Total Debt, and Paid Amount.<br> Each Factory Client is uniquely identified by its Username. |
+| **Pattern Name** | Production Task Scheduling |
+| **Domain** | User Function Domain |
+| **Group** | Data Maintenance Group |
+| **Anticipated Frequency** | يُستدعى ديناميكياً فور إنشاء طلب تصنيع ملابس أو تأكيد أوردر تفصيل. |
+| **Classifications** | Functional, Complex Business Logic |
 
-### 3.2 Transaction Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** يُستخدم لجدولة وتوزيع الأوردرات داخل الورشة وتكليف العمال ومتابعة تغير حالات الأوردر اللوجستية حتى التسليم النهائي للعميل.
+* **When NOT to use:** لا يُستخدم لمعالجة المدفوعات المالية الفورية لمنتجات الموقع الجاهزة التي لا تحتاج لتصنيع في الورشة.
+
+### [3] Discussion
+يمثل هذا النمط عصب اللوجستيات في كود مشروعك (`OrderService.js` وموديل `Order.js`). يراقب النمط حالات الأوردر ويمنع التأخر في المواعيد النهائية المحددة للتسليم عبر ربط المهام التشغيلية بـ العمال الأكفاء لها في الورشة.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **products** | إلزامي (Mandatory) | مصفوفة تحتوي على تفاصيل الملابس، الألوان، والمقاسات المطلوبة. |
+| **workerId** | اختياري (Optional) | معرّف العامل المكلف بتنفيذ هذا الأمر في الورشة (ObjectId). |
+| **status** | إلزامي (Mandatory) | حالة الإنتاج وتأخذ قيم ثابتة: Pending أو In Progress أو Completed. |
+| **dueDate** | إلزامي (Mandatory) | التاريخ الأقصى المسموح به لإنهاء تسليم القطعة تفادياً للتأخير. |
+
+### [5] Templates
+"يجب على النظام عند إنشاء أمر تشغيل، إسناده لـ [العامل المكلف] وتحديث حالة الإنتاج في حقل [status] لتنتهي القطعة قبل تاريخ [dueDate]."
+
+### [6] Examples
+* **مثال 1:** يقوم مدير الورشة عبر الـ `AddProductionModal.tsx` بإنشاء أمر تفصيل لجاكيت وإسناده للعامل "سيد الخياط" وحفظه كـ `In Progress`.
+* **مثال 2:** يستعرض العامل مهامه النشطة في صفحة `FactoryDashboard.tsx` ويقوم بضغط زر الإكمال لتتحول الحالة إلى `Completed`.
+
+### [7] Development & Testing Considerations
+* **للمطور:** يجب منع الانتقال البرمجي العشوائي للحالات داخل `OrderService.js` (منع الانتقال من Pending إلى Completed مباشرة دون المرور بـ In Progress) لضمان صحة البيانات اللوجستية.
+* **المختبر:** التحقق من أن واجهة العامل لا تظهر له ولا تتيح له تعديل سوى الأوردرات المسندة لمعرّفه الشخصي فقط منعاً للتداخل.
+
+---
+
+## 8. Virtual Try-On (VTO) Image Processing Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Customer Order Transaction | There shall be a function to create a Customer Order transaction. Each Customer Order shall contain the following information: Shipping Address Details, Order Item Details, Total Amount, and Status.<br> A Customer Order is deemed to have happened when the customer successfully submits the checkout form. |
-| Wholesale Order Transaction | There shall be a function to create a Wholesale Order transaction for a Factory Client. Each Wholesale Order shall contain the following information: Client ID, Product Details, Quantities per Size, Total Quantity, Price Per Piece, Total Price, and Status.<br> A Wholesale Order is deemed to have happened when the factory client submits the order request. |
-| Client Payment Transaction | It shall be possible to post a payment adjustment (credit) to the account of a selected Factory Client. The transaction shall include the payment amount. This action will increase the `PaidAmount` of the client. |
+| **Pattern Name** | Virtual Try-On (VTO) Image Processing |
+| **Domain** | User Function Domain |
+| **Group** | Inquiry Group |
+| **Anticipated Frequency** | يُستدعى في كل مرة يطلب فيها العميل تجربة لباس افتراضي على جسده. |
+| **Classifications** | Functional, AI-integrated |
 
-### 3.3 Configuration Pattern
-| Summary | Definition |
+### [2] Applicability
+* **When to use:** عندما يقف العميل في صفحة الـ `VirtualTryOn.tsx` ويرفع صورته الشخصية مع اختيار فستان من الأتيليه لرؤية ملاءمة القطعة لجسده عبر دمج الذكاء الاصطناعي.
+* **When NOT to use:** لا يُستخدم لعرض صور الموديلات الثابتة التقليدية، بل ينحصر في عمليات المعالجة التوليدية الفورية للعملاء.
+
+### [3] Discussion
+تعتبر هذه الميزة التنافسية الكبرى لـ Fluffy وتظهر في كود `vtoController.js` وملفات الـ Tests. يقوم النمط بإرسال طلب غير متزامن لنموذج الـ AI الخارجي (`fashn-ai/fashn-vton-1.5` أو Gradio) وانتظار التوليد الرقمي لإرجاع الصورة النهائية وعرضها للعميل.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **personImage** | إلزامي (Mandatory) | رابط أو ملف الصورة الشخصية المرفوعة من العميل (String/File). |
+| **clothImage** | إلزامي (Mandatory) | رابط صورة قطعة اللباس المراد قياسها من الداتا بيس. |
+| **resultUrl** | إلزامي (Mandatory) | رابط الصورة المعالجة والمدمجة النهائية الراجعة من خادم الـ AI بنجاح. |
+
+### [5] Templates
+"يجب على النظام عند طلب العميل تجربة لباس، إرسال [صورة الشخص] و [صورة اللباس] لواجهة معالجة الـ AI، واستقبال النتيجة في [resultUrl] لعرضها في الشاشة."
+
+### [6] Examples
+* **مثال 1:** ترفع العميلة صورتها وتختار فستاناً سواريه، يستدعي كود الـ Backend السيرفر الخارجي الموضح في `test_gradio_run.js` ويعرض الصورة المدمجة للعميلة في أقل من 15 ثانية.
+
+### [7] Development & Testing Considerations
+* **للمطور:** معالجة الـ AI تأخذ وقتاً، لذا يجب إحاطة الكود ببلوك `try/catch` قوي للتعامل مع حالات الـ Timeouts وسقوط الـ APIs الخارجية لضمان استقرار السيرفر.
+* **المختبر:** التحقق من إظهار مؤشر تحميل (Spinner) في صفحة الـ Frontend أثناء المعالجة لحظر الضغط المتكرر من العميل وتوفير موارد السيرفر الكبيرة.
+
+---
+
+## 9. Customer Order Cost Calculation Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Shipping Rates Configuration | The system shall store the following information about Shipping Rates for the purpose of order total calculation:<br> - A mapping of Governorate Names to Shipping Cost amounts.<br> This configuration can be changed at any time by the Owner. |
+| **Pattern Name** | Customer Order Cost Calculation |
+| **Domain** | Commercial Domain |
+| **Group** | Financial Group |
+| **Anticipated Frequency** | يُستدعى ديناميكياً عند كل ضغط لزر إتمام الشراء في شاشة الـ `Cart.tsx`. |
+| **Classifications** | Functional, Financial, Security-critical |
 
-## 4. User Function Requirements (متطلبات وظائف المستخدم)
+### [2] Applicability
+* **When to use:** يُستخدم لحساب القيمة المالية الإجمالية للمشتريات داخل السلة بضرب الكميات في الأسعار الرسمية وإضافة تكاليف شحن المحافظات وتسجيلها نهائياً.
+* **When NOT to use:** لا يُستخدم لحساب الديون الكبيرة للمصانع الشريكة B2B (لأن تلك وظيفة نمط Factory Client Invoicing).
 
-### 4.1 Inquiry Pattern
-| Summary | Definition |
+### [3] Discussion
+حماية العمليات المالية محورية لمنع ثغرات تعديل الأسعار الشهيرة في الـ Browser. الكود الفعلي في الـ Backend بملف `orderController.js` يستقبل فقط معرّفات المنتجات من الـ Frontend، ثم يقوم بعمل لووب برميجي وجلب الأسعار الحقيقية والصلبة من قاعدة البيانات لحساب الـ `totalAmount` بأمان تام.
+
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **items** | إلزامي (Mandatory) | مصفوفة تحتوي على معرّفات المنتجات والكمية المحددة لكل قطعة. |
+| **totalAmount** | إلزامي (Mandatory) | السعر الإجمالي الكلي المحسوب برمجياً من السيرفر ويحفظ كـ Record ثابت. |
+| **shippingAddress** | إلزامي (Mandatory) | تفاصيل العنوان والمحافظة لحساب تكلفة الشحن المناسبة تلقائياً. |
+
+### [5] Templates
+"يجب على النظام عند إتمام عملية الدفع، احتساب حقل [totalAmount] بجمع أسعار المنتجات الحقيقية من قاعدة البيانات وإضافة مصاريف شحن الـ [Governorate]."
+
+### [6] Examples
+* **مثال 1:** يشتري عميل قطعتين، يقوم الكود في `orderController.js` بضرب الكمية في السعر وجلب قيمة الشحن، وتوليد الفاتورة برقم ObjectId فريد في جدول الطلبات.
+
+### [7] Development & Testing Considerations
+* **للمطور:** يجب حفظ الأسعار وقت الشراء كـ قيم رقمية ثابتة (Snapshot Prices) داخل سجل الأوردر، حتى لا تتأثر الفاتورة القديمة للعميل إذا قامت الإدارة بتغيير سعر المنتج في المتجر لاحقاً.
+* **المختبر:** اختبار محاولة إرسال طلب شراء معدّل بالمتصفح (مثال: تمرير سعر قطعة بـ 5 جنيهات بدلاً من 500 جنيه)، والتحقق من أن الـ Backend يرفض القيمة المزيفة ويحتسب السعر الأصلي الصحيح من الداتا بيس مباشرة.
+
+---
+
+## 10. Factory Client Invoicing Pattern
+
+### [1] Basic Details
+| الحقل (Field) | القيمة المطابقة للمشروع (Value) |
 | :--- | :--- |
-| Products List Inquiry | There shall be an inquiry that shows available products. Its purpose is to allow customers to browse the catalog.<br> For each Product, the inquiry shall show: Image, Name, Price, and Stock Status.<br> The items to show can be specified by entering the following selection criteria: Category (e.g., Tops, Bottoms, All). |
-| Factory Client Orders Inquiry | There shall be an inquiry that lists Wholesale Orders for a specific Factory Client. <br> For each order, it shall show: Product Name, Details, Colors, Quantity Per Size, Total Quantity, Price, and Status. |
-| Worker Payroll Inquiry | There shall be an inquiry that shows the financial details for all workers. For each worker, it shall show: Base Salary, Deductions, and calculated Net Salary, alongside attendance records. |
+| **Pattern Name** | Factory Client Invoicing |
+| **Domain** | Commercial Domain |
+| **Group** | Financial Group |
+| **Anticipated Frequency** | يُستدعى ديناميكياً عند تسليم طلبيات التصنيع الكبرى للمصانع والأتيليهات الشريكة. |
+| **Classifications** | Functional, Financial |
 
-### 4.2 Report Pattern
-| Summary | Definition |
-| :--- | :--- |
-| AI Predictions Report | There shall be a report that shows AI Sales & Revenue Predictions. The purpose of this report is to forecast future performance based on historical data.<br> The report shall show the following: <br> - Next Month's Revenue Forecast <br> - Predicted Top Selling Retail Product <br> - Inventory Health (At-Risk Products) <br> - Fashion & Attributes Trends. |
+### [2] Applicability
+* **When to use:** يُستخدم لإصدار الفواتير الكبرى وحساب الـ Debt (الديون الكلية) والمبالغ المدفوعة للتعاملات التجارية B2B بين الأتيليه والمصانع الشريكة.
+* **When NOT to use:** لا يُستخدم لطلبات الشراء الفردية الصغيرة للعملاء الأفراد عبر موقع المتجر التجاري.
 
-## 5. Access Control Requirements (متطلبات التحكم في الوصول)
+### [3] Discussion
+تختلف فواتير الكيانات الكبيرة عن الأفراد؛ حيث تشمل حساب عقود وكميات ضخمة بناءً على عدد القطع والمقاسات. النمط يربط معرّف الـ `FactoryClient` بقائمة الأوردرات المصنعة له، ويقوم بحساب إجمالي السعر وإضافته لـ حقل الـ `totalDebt` الخاص بالمصنع الشريك لضمان سلامة الدورة الحسابية والمالية للمشروع.
 
-### 5.1 User Registration Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Customer Self-Registration | A person shall be able to self-register as a Customer, by filling out the Sign Up form. They shall be asked to enter the following personal information:<br> - Full Name (mandatory)<br> - Email Address (mandatory)<br> - Phone Number<br> - Password (mandatory) |
+### [4] Content
+| بند المعلومات (Item) | الحالة (Status) | الوصف والمعلومات المطلوبة في الكود (Description) |
+| :--- | :--- | :--- |
+| **clientId** | إلزامي (Mandatory) | معرّف المصنع أو الأتيليه الشريك صاحب الأوردر (ObjectId يربط بـ FactoryClient). |
+| **totalPrice** | إلزامي (Mandatory) | السعر الإجمالي للطلبية الكبيرة المحسوب بضرب (عدد القطع * سعر القطعة المتفق عليه). |
+| **status** | إلزامي (Mandatory) | حالة الأوردر، وفور تحولها إلى "تم التسليم" يتم ترحيل المبلغ كـ دين لحساب المصنع. |
 
-### 5.2 User Authentication Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Customer Authentication | A Customer shall be able to self-authenticate (log in) by entering their registered Email Address and Password. |
-| Factory Client Authentication | A Factory Client shall be able to self-authenticate (log in) by entering their Username and Password. |
+### [5] Templates
+"يجب على النظام تجميع حساب طلبيات التصنيع لـ [المصنع الشريك]، وإصدار فاتورة إجمالية برقم فريد، وترحيل السعر لـ حقل [totalDebt] فور تسليم الطلبية."
 
-### 5.3 Specific Authorization Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Owner Dashboard Access | The Owner Dashboard (managing products, workers, factory clients, and viewing predictions) shall be accessible only by users with the 'owner' or 'admin' role. |
-| Customer Order Access | A Customer shall be able to view only orders that they placed (tied to their email/phone), not orders placed by other customers. |
-| Factory Client Access | A Factory Client shall be able to access the Factory Dashboard and view only their own wholesale orders and financial debt status. |
+### [6] Examples
+* **مثال 1:** يقوم السيستم بتجميع حساب طلب تصنيع كمية معينة لـ "أتيليه سادا" وإصدار فاتورة تجارية كبرى وعرضها داخل بوابة العميل `FactoryClientPortal.tsx` لمراجعة ديونه.
 
-## 6. Performance Requirements (متطلبات الأداء)
-
-### 6.1 Response Time Pattern
-| Summary | Definition |
-| :--- | :--- |
-| VTO AI Processing response time | Each Virtual Try-On (VTO) operation shall have a response time of no more than 15 seconds from image upload to result display. This figure is based on expected Hugging Face API processing limits. |
-| Web page display response time | Each Web page produced by the system shall be fully displayed in no longer than 4 seconds from the time the user requested it. This requirement does not apply to VTO processing. |
-| Data format error response time | Any error in the format of data entered by a user shall be pointed out to the user with a suitable error message no more than 1 second after they submit the information to the system. |
-
-### 6.2 Throughput Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Order entry rate | The system shall be able to handle customer order transactions at a rate of at least 10 per second. No contingency has been added; this rate represents the actual demand expected during peak sales. |
-| n8n sync rate | The n8n Webhook Interface (i1) shall be able to handle order synchronization messages at a rate of at least 5 per second. |
-
-### 6.3 Dynamic Capacity Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Simultaneous customer capacity | The system shall be able satisfy 100 simultaneous customers logged in and active. A user is deemed to be active if they have submitted a request to the system in the past five minutes. |
-| Simultaneous employee capacity | The system shall be able satisfy 20 simultaneous employees (workers and admins) logged in and active. |
-
-### 6.4 Static Capacity Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Total customer capacity | The system shall be able to handle a minimum of 50,000 customers. This covers all registered customers. |
-| Total order capacity | The system shall be able to handle a minimum of 200,000 orders. |
-
-### 6.5 Availability Pattern
-| Summary | Definition |
-| :--- | :--- |
-| System availability | The system shall normally be available to users 24 hours per day, every day of the year, except in exceptional circumstances of a frequency and duration not to exceed 1 hour per month. "Normally available" shall be taken to mean all user functions are operational. |
-
-## 7. Data Longevity & Archiving Requirements (متطلبات حفظ وأرشفة البيانات)
-
-### 7.1 Data Longevity Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Store orders for 5 years online | Customer orders shall be stored online for 5 years from the date of order creation. When data is eligible for removal, it shall be permanently deleted. The purpose of this is to maintain business records for future reference and auditing. |
-| Store wholesale orders for 5 years | Wholesale orders shall be stored online for 5 years from the date of delivery. |
-
-### 7.2 Data Archiving Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Customer order archiving | Customer orders shall be copied from the main production database to an offline archive database monthly. Initiated automatically by the system. The purpose of this is to reduce the size of the active database. |
-
-## 8. Flexibility & Scalability Requirements (متطلبات المرونة والتوسع)
-
-### 8.1 Scalability Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Product scalability | The system shall be scalable to accommodate an unrestricted number of products. Expected to reach tens of thousands. The motivation for this requirement is to cater for future growth in the business catalog. |
-| Factory client scalability | The system shall be scalable to accommodate an unrestricted number of factory clients. |
-
-### 8.2 Extendability Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Payment methods extendable | It shall be possible to extend the payment processing by developing and "plugging in" an extra software module. The introduction of any such module shall not require fundamental changes to the core software of the system to allow its introduction. It shall be straightforward to install. |
-
-### 8.3 Multi-Lingual Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Provision to be multi-lingual | The system shall make provision for the future introduction of support for multiple languages. Specifically Arabic and English. |
-
-### 8.4 Installability Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Main system installability | It shall be possible for the main system software to be installed by a competent system administrator. The installation process shall be convenient and involve the entry of little information by the user. |
-
-## 9. Advanced Access Control & Approval Requirements (متطلبات التحكم المتقدم والاعتمادات)
-
-### 9.1 Configurable Authorization Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Employee access to functions | An employee shall be able to access only internal factory functions to which they have been granted permission (by virtue of the roles assigned to them). The motivation for this requirement is to restrict access based on worker roles and protect sensitive factory operations. |
-
-### 9.2 Approval Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Wholesale order pricing approval | A wholesale order pricing must always be approved by the owner. If approval is denied, the order status shall be reverted to pending. |
-
-## 10. Additional User Function & Accessibility Requirements (متطلبات إضافية لوظائف المستخدم)
-
-### 10.1 Accessibility Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Accessible by color blind people | The system shall be accessible by people who are color blind, to the extent that color coding shall never be the only means of conveying any information. This pertains to Section 508 guidelines. |
-| Keyboard only input | The system shall be accessible by people with specific manual dexterity needs to the extent that it shall be possible to perform all input to the system by using the keyboard alone. |
-
-### 10.2 Chronicle Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Record errors | All error conditions detected by the system shall be recorded. At least the following shall be recorded: Error Message, Date and time, and the function where the error occurred. |
-| Record failed user actions | Each failed attempt by a user to perform an action (such as incorrect password entry) shall be recorded. |
-
-## 11. Commercial Requirements (المتطلبات التجارية)
-
-### 11.1 Fee/Tax Pattern
-| Summary | Definition |
-| :--- | :--- |
-| Shipping fee | The system shall calculate a Shipping fee as a fixed monetary amount on customer orders provided that shipping is requested. It is paid by customer to system owner upon checkout. The fee rate shall be determined by the selected Governorate. The system is responsible for calculating and adding the fee to the order total. |
-| Factory Client Debt | The system shall calculate a Factory Client Debt as a monetary amount on wholesale orders provided that the order status is 'تم التسليم'. It is paid by the factory client to the system owner upon order completion. The fee rate shall be determined by the agreed price per piece multiplied by quantity. The system is responsible for calculating the total price and adding it to the client's total debt. |
+### [7] Development & Testing Considerations
+* **للمطور:** ربط الفواتير المفتوحة بحسابات المصانع برمجياً، بحيث يمنع السيرفر رفع طلب تصنيع جديد ضخم إذا كان العميل التجاري متجاوزاً للحد الائتماني المسموح به أو لديه مبالغ ديون متأخرة لم تسدد.
+* **المختبر:** التحقق من زيادة الـ `totalDebt` بمقدار السعر الإجمالي للأوردر فوراً وتلقائياً عند تحويل حالة الأوردر لـ "تم التسليم" بنجاح.
