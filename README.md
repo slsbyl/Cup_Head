@@ -14,7 +14,7 @@
 | **Domain** | Access Control Domain |
 | **Group** | Access Control Infrastructure Group |
 | **Anticipated Frequency** | يتكرر عند إنشاء أي حساب جديد في النظام (Client, Worker, Admin). |
-| **Classifications** | Functional, Database-related |
+| **Classifications** | Functional: Yes; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** يُستخدم لتسجيل حساب جديد لـ (عميل B2C، أو عامل إنتاج، أو مدير الأتيليه) لإنشاء سجل هوية رقمي وصلاحيات فريدة.
@@ -56,7 +56,7 @@
 | **Domain** | Access Control Domain |
 | **Group** | Access Control Infrastructure Group |
 | **Anticipated Frequency** | يُستدعى عند كل محاولة تسجيل دخول للمنصة. |
-| **Classifications** | Functional, Security-critical |
+| **Classifications** | Functional: Yes; Pervasive: No; Affects database: No |
 
 ### [2] Applicability
 * **When to use:** عندما يحاول العميل أو العامل تسجيل الدخول عبر واجهة الـ `Login.tsx` للوصول إلى بياناته المحمية.
@@ -93,7 +93,7 @@
 | **Domain** | Access Control Domain |
 | **Group** | Access Control Infrastructure Group |
 | **Anticipated Frequency** | يُطبق كـ Middleware على جميع الـ API routes الحساسة لحماية البيانات. |
-| **Classifications** | Non-functional, Security-critical, Pervasive |
+| **Classifications** | Functional: No; Pervasive: Yes; Affects database: No |
 
 ### [2] Applicability
 * **When to use:** يُستخدم لحظر لوحات التحكم الإدارية والـ Endpoints الحساسة عن المستخدمين العاديين (مثل منع العميل من الدخول لبيانات مصنع أو التلاعب بالمنتجات).
@@ -131,7 +131,7 @@
 | **Domain** | User Function Domain |
 | **Group** | Data Maintenance Group |
 | **Anticipated Frequency** | متكرر جداً (يُستدعى عند إضافة أو تعديل بضائع الأتيليه والخامات كالجلود). |
-| **Classifications** | Functional, Database-related |
+| **Classifications** | Functional: Yes; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** عندما يقوم الأدمن بإدارة منتجات المتجر الإلكتروني (إضافة فستان سواريه، تعديل خامة جلدية، تحديث الأسعار أو كمية الاستوك).
@@ -170,7 +170,7 @@
 | **Domain** | User Function Domain |
 | **Group** | Data Maintenance Group |
 | **Anticipated Frequency** | يُستدعى عند تسجيل عامل جديد بالورشة أو تحديث مهاراته ورواتبه الحسابية. |
-| **Classifications** | Functional, Database-related |
+| **Classifications** | Functional: Yes; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** عندما تقوم الإدارة بتهيئة ملفات العمال لتحديد تخصصاتهم الفنية ورواتبهم الأساسية لتوزيع المهام بكفاءة داخل خط إنتاج الأتيليه.
@@ -208,7 +208,7 @@
 | **Domain** | User Function Domain |
 | **Group** | Data Maintenance Group |
 | **Anticipated Frequency** | يُستدعى مرة واحدة عند تسجيل مصنع أو أتيليه شريك جديد في تعاقدات الجملة B2B. |
-| **Classifications** | Functional, Database-related |
+| **Classifications** | Functional: Yes; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** عندما ترغب إدارة الأتيليه في تسجيل بيانات الكيانات والمصانع الخارجية الشريكة لمتابعة طلبيات الجملة والديون والمدفوعات.
@@ -247,7 +247,7 @@
 | **Domain** | User Function Domain |
 | **Group** | Data Maintenance Group |
 | **Anticipated Frequency** | يُستدعى ديناميكياً فور إنشاء طلب تصنيع ملابس أو تأكيد أوردر تفصيل. |
-| **Classifications** | Functional, Complex Business Logic |
+| **Classifications** | Functional: Yes; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** يُستخدم لجدولة وتوزيع الأوردرات داخل الورشة وتكليف العمال ومتابعة تغير حالات الأوردر اللوجستية حتى التسليم النهائي للعميل.
@@ -286,7 +286,7 @@
 | **Domain** | User Function Domain |
 | **Group** | Inquiry Group |
 | **Anticipated Frequency** | يُستدعى في كل مرة يطلب فيها العميل تجربة لباس افتراضي على جسده. |
-| **Classifications** | Functional, AI-integrated |
+| **Classifications** | Functional: Yes; Pervasive: No; Affects database: No |
 
 ### [2] Applicability
 * **When to use:** عندما يقف العميل في صفحة الـ `VirtualTryOn.tsx` ويرفع صورته الشخصية مع اختيار فستان من الأتيليه لرؤية ملاءمة القطعة لجسده عبر دمج الذكاء الاصطناعي.
@@ -323,7 +323,7 @@
 | **Domain** | Commercial Domain |
 | **Group** | Financial Group |
 | **Anticipated Frequency** | يُستدعى ديناميكياً عند كل ضغط لزر إتمام الشراء في شاشة الـ `Cart.tsx`. |
-| **Classifications** | Functional, Financial, Security-critical |
+| **Classifications** | Functional: Yes; Pervasive: Maybe; Affects database: No |
 
 ### [2] Applicability
 * **When to use:** يُستخدم لحساب القيمة المالية الإجمالية للمشتريات داخل السلة بضرب الكميات في الأسعار الرسمية وإضافة تكاليف شحن المحافظات وتسجيلها نهائياً.
@@ -360,7 +360,7 @@
 | **Domain** | Commercial Domain |
 | **Group** | Financial Group |
 | **Anticipated Frequency** | يُستدعى ديناميكياً عند تسليم طلبيات التصنيع الكبرى للمصانع والأتيليهات الشريكة. |
-| **Classifications** | Functional, Financial |
+| **Classifications** | Functional: Yes; Pervasive: Maybe; Affects database: Yes |
 
 ### [2] Applicability
 * **When to use:** يُستخدم لإصدار الفواتير الكبرى وحساب الـ Debt (الديون الكلية) والمبالغ المدفوعة للتعاملات التجارية B2B بين الأتيليه والمصانع الشريكة.
