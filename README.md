@@ -374,7 +374,7 @@
 
 <br>
 
-### Pattern Type: System function
+### Pattern Type: Inter-system interaction
 **Group:** Chapter 5: Fundamental
 | Characteristic | Description |
 | :--- | :--- |
@@ -420,13 +420,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-26 |
 | **Requirement name** | Manual Monthly Payroll Adjustment |
-| **Requirement description** | The system shall provide a function to update Worker monthly payroll counters, enabling the reset of presentDays, absentDays, and deductions to zero at the end of each billing month. |
+| **Requirement description** | The system shall provide a Monthly Payroll Adjustment user interface. Its purpose is to reset Worker presentDays, absentDays, and deductions to zero at the end of the month. It shall be used by the Owner. It shall allow the user to enter a reset trigger. It shall display the zeroed counters. |
 | **Source** | HR |
 | **Owner** | Owner |
 | **Author** | Backend / Frontend |
@@ -443,13 +443,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-19 |
 | **Requirement name** | Product CRUD |
-| **Requirement description** | The system shall provide functions to Create, Read, Update, and Delete Product records. The following operations shall be available: Create (POST), Read (GET), Update (PUT), Delete (DELETE). |
+| **Requirement description** | The system shall provide a Product Management user interface. Its purpose is to Create, Read, Update, and Delete Product records. It shall be used by Admins. It shall allow the user to enter product details. It shall display the product list and forms. |
 | **Source** | Ops |
 | **Owner** | Admin |
 | **Author** | BA |
@@ -466,13 +466,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-20 |
 | **Requirement name** | Worker CRUD |
-| **Requirement description** | The system shall provide functions to Create, Read, Update, and Delete Worker records. The following operations shall be available: Create, Read, Update, Delete, Attendance update, Deductions update, Monthly reset. |
+| **Requirement description** | The system shall provide a Worker Management user interface. Its purpose is to Create, Read, Update, and Delete Worker records. It shall be used by the Owner. It shall allow the user to enter worker details and attendance. It shall display the team payroll list. |
 | **Source** | HR |
 | **Owner** | Owner |
 | **Author** | BA |
@@ -489,13 +489,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-21 |
 | **Requirement name** | Factory Client CRUD |
-| **Requirement description** | The system shall provide functions to Create, Read, Update, and Delete Factory Client records. The following operations shall be available: Create, Read, Record Payment, Update, Delete. |
+| **Requirement description** | The system shall provide a Factory Client Management user interface. Its purpose is to Create, Read, Update, and Delete Factory Client records. It shall be used by the Owner. It shall allow the user to enter B2B client details. It shall display the factory clients roster. |
 | **Source** | Ops |
 | **Owner** | Owner |
 | **Author** | BA |
@@ -512,13 +512,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-22 |
 | **Requirement name** | Cancel Order & Restore |
-| **Requirement description** | The system shall provide a function to update the status of a Customer Order to 'ملغي' and atomically restore Product stock quantities. |
+| **Requirement description** | The system shall provide an Order Cancellation user interface. Its purpose is to update the status of a Customer Order to 'ملغي' and atomically restore Product stock. It shall be used by Support and Ops. It shall allow the user to enter a cancellation trigger. It shall display the updated order status. |
 | **Source** | Support |
 | **Owner** | Ops |
 | **Author** | Backend |
@@ -535,13 +535,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-23 |
 | **Requirement name** | Worker Attendance |
-| **Requirement description** | The system shall provide a function to update Worker attendance records by incrementing or decrementing present/absent days. |
+| **Requirement description** | The system shall provide a Worker Attendance user interface. Its purpose is to update Worker attendance records by incrementing or decrementing present/absent days. It shall be used by the Owner. It shall allow the user to enter attendance increments. It shall display the updated counters. |
 | **Source** | HR |
 | **Owner** | Owner |
 | **Author** | Frontend |
@@ -558,13 +558,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-24 |
 | **Requirement name** | Wholesale Status Transitions |
-| **Requirement description** | The system shall provide a function to update the status of a Wholesale Order. Statuses shall advance forward only. |
+| **Requirement description** | The system shall provide a Wholesale Status Transition user interface. Its purpose is to advance the status of a Wholesale Order forward. It shall be used by Ops and Factories. It shall allow the user to enter the new status selection. It shall display the updated status and debt effects. |
 | **Source** | B2B |
 | **Owner** | Ops |
 | **Author** | BA |
@@ -581,13 +581,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-25 |
 | **Requirement name** | Global Shipping Config |
-| **Requirement description** | The system shall provide a function to update System Settings records for global shipping fees. |
+| **Requirement description** | The system shall provide a Global Shipping Configuration user interface. Its purpose is to update System Settings records for global shipping fees. It shall be used by the Owner. It shall allow the user to enter new shipping rates per governorate. It shall display the saved rates. |
 | **Source** | Finance |
 | **Owner** | Owner |
 | **Author** | BA |
@@ -604,13 +604,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-27 |
 | **Requirement name** | Manual Stock Adjustment |
-| **Requirement description** | The system shall provide a function to update Product stock by decrementing the value safely via a manual adjustment. |
+| **Requirement description** | The system shall provide a Manual Stock Adjustment user interface. Its purpose is to update Product stock by decrementing the value safely. It shall be used by Admins. It shall allow the user to enter a stock decrement value. It shall display the updated stock count. |
 | **Source** | Ops |
 | **Owner** | Admin |
 | **Author** | API |
@@ -650,13 +650,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-29 |
 | **Requirement name** | Cart Quantity Adjustment |
-| **Requirement description** | The system shall provide a function to update Cart Item quantities in the client-side state, capped at maximum stock limits. |
+| **Requirement description** | The system shall provide a Cart Quantity Adjustment user interface. Its purpose is to update Cart Item quantities in the client-side state. It shall be used by Customers. It shall allow the user to enter quantity increments and decrements. It shall display the updated subtotal and stock limits. |
 | **Source** | UX |
 | **Owner** | PO |
 | **Author** | Frontend |
@@ -673,13 +673,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
-**Group:** Chapter 8: User Function
+### Pattern Type: Transaction
+**Group:** Chapter 7: Data Entity
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-30 |
 | **Requirement name** | Auto Stock Decrement |
-| **Requirement description** | The system shall provide a function to update Product stock and soldCount automatically upon successful Customer Order creation. |
+| **Requirement description** | The system shall process each Customer Order transaction by recording: items, and applying the effect: decrements Product.stock and increments Product.soldCount automatically. |
 | **Source** | Ops |
 | **Owner** | Sys Admin |
 | **Author** | Backend |
@@ -1432,13 +1432,13 @@
 
 <br>
 
-### Pattern Type: Data maintenance
+### Pattern Type: User interface
 **Group:** Chapter 8: User Function
 | Characteristic | Description |
 | :--- | :--- |
 | **Requirement identifier** | FR-63 |
 | **Requirement name** | Edit Pending B2B Order |
-| **Requirement description** | The system shall provide a function to update Wholesale Order records (colors, quantityPerSize, designImages, productionNotes). This operation shall be available only when the order status is 'في انتظار التسعير'. |
+| **Requirement description** | The system shall provide a Pending B2B Order Editing user interface. Its purpose is to update Wholesale Order records before pricing. It shall be used by Factory Clients. It shall allow the user to enter colors, quantityPerSize, designImages, and productionNotes. It shall display the updated order details. |
 | **Source** | B2B |
 | **Owner** | Ops |
 | **Author** | API |
